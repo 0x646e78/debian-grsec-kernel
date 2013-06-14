@@ -5,19 +5,12 @@
 # Will build a .deb of the kernel only if we have a .config for it,
 # otherwise this script will just check for and manage updates.
 #
-# Tested with:
-#       * Kernels 3.8.8 - 3.9.5
-#       * Debian Wheezy (7.0), Squeeze (6.06)
+# Tested with Kernels 3.9.5 and on Debian Wheezy and Squeeze.
 #
 # Place this script where you want to build/store the kernels,
 # eg: copy script to /home/user/source/kernels/ and run it there.
 #
 # To compile with last found build config: ./get-and-build.sh buildlastconfig
-#
-# NOTE: I had to use the paxctl command to disable protections on
-# /usr/sbin/grub-probe and /usr/bin/grub-script-check
-# because I found that PAX was killing update-grub (which is run
-# by /etc/kernel/postinst.d/zz-update-grub after kernel install)
 #
 # This script is based on:
 # https://github.com/StalkR/misc/blob/master/kernel/get-and-build.sh
@@ -45,7 +38,6 @@ if [ `echo ${needthese} | wc -w` -gt 0 ]; then
 fi
 
 ## do we have these pgp keys, if not try to download them
-# for kernel
 if [ `gpg --list-keys 6092693E | wc -l` -eq 0 ]; then
         echo "[*] don't have kernel gpg keys";
         gpg --recv-keys 6092693E &> /dev/null || fail "gpg get kernel keys"
