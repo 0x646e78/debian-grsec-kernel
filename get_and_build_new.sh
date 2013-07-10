@@ -45,8 +45,10 @@ checkgrsec() {
         ME=`echo $KVER | awk -F \. {'print $2'}` # x.y.x
         MI=`echo $KVER | awk -F \. {'print $3'}` # x.x.y
 
-        # When MI is 0 Grsec site will list it as 3.10.0 and Kernel.org will use 3.10
-        # TODO: Hack to fix this
+        # When MI is 0 Grsec site will publish as 3.10.0 and Kernel.org will use 3.10. Hack to fix this:
+        if [ "$MI" = "0" ]; then
+                KVER="$MA.$ME"
+        fi
 }
 
 getgrsec() {
