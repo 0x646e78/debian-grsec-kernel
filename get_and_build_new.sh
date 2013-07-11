@@ -229,8 +229,8 @@ if [[ "$1" = "update" || "$2" = "update" || "$3" = "update" || "$RUNUPDATES" = [
                 echo -e "\n [*] Applied patch to kernel source."
         fi
 else
-        # ser kver if not from checking updates
-        KVER=`ls | grep "[0-9].[0-9].[0-9]" | tail -n1`
+        # set kver if not from checking updates
+        KVER=`ls | grep -o "[0-9]*.[0-9]*.[0-9]" | sort -k2 -t. -n | tail -n1`
 fi
 
 # copy over old config?
