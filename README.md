@@ -23,15 +23,18 @@ To compile with last found build config use: ./get-and-build.sh buildlastconfig
 
 Grsec notes
 ==============
-
 I found that PAX was killing update-grub programs, which are run on after a kernel install by /etc/kernel/postinst.d/zz-update-grub and on removing a kernel by /etc/kernel/postrm.d/zz-update-grub
 
 To stop this use the paxctl command to disable protections on /usr/sbin/grub-probe and /usr/bin/grub-script-check
 
 Backup the binaries first before converting them. (paxctl -cC /bin/program) 
 
+Stability
+==============
+I routinely build the latest Kernel on my [non-production] server without any issues usually. This script is really just for my own sake but maybe it's also useful for someone else.
+
 Credit
 ==============
-This script is based on https://github.com/StalkR/misc/blob/master/kernel/get-and-build.sh
+This script was initially based on https://github.com/StalkR/misc/blob/master/kernel/get-and-build.sh
 
-
+Not too much or the original code remains now, my customizations have more than doubled the size of the script... .
