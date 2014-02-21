@@ -22,7 +22,7 @@ LASTCONFIG="n"
 BUILD="n"
 # OR ./get-and-build.sh build
 
-#########################################################################################################################################
+#########################################################################
 ## functions:
 
 fail() {
@@ -131,7 +131,7 @@ compilekern() {
         echo -e "\n [*] Kernel compiled.";
 }
 
-#########################################################################################################################################
+#########################################################################
 ## checks:
 
 # environment
@@ -148,10 +148,16 @@ fi
 PACKAGENEEDS="build-essential make fakeroot pgpgpg wget git ncurses-dev curl wget xz-utils grub-legacy"
 for thepackage in $PACKAGENEEDS
 do
-        dpkg-query -W $thepackage &> /dev/null || needthese="$needthese $thepackage"
+        dpkg-query -s $thepackage &> /dev/null || needthese="$needthese $thepackage"
 done
 if [ `echo ${needthese} | wc -w` -gt 0 ]; then
-        fail "You need to run: sudo apt-get install $needthese"
+        printf "You need to install the following packages:$needthese\nWould you like to install these now?\n[y/N] "
+        read response
+        if [[ "$response" =~ [yY] ]]; then
+                sudo apt-get install$needthese
+        else
+                fail "You need to run: sudo apt-get install$needthese"
+        fi
 fi
 
 ## Do we have the pgp keys we need to use to check signed files? If not try to download them
@@ -191,7 +197,7 @@ if [ `gpg --list-keys 4245D46A | wc -l` -eq 0 ]; then
         echo "[*] Got Bradley Spengler's pgp key";
 fi
 
-#########################################################################################################################################
+#########################################################################
 ## actions:
 
 # check for and get updates?
