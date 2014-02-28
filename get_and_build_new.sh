@@ -33,12 +33,13 @@ fail() {
 checkgrsec() {
         # Parse the grsecurity website for testing version number of grsec and kernel it's for
         echo -e "\n [*] Checking what kernel latest Grsec patch uses";
-        GRSEC=$(curl -s https://grsecurity.net/test.php)
-        [ -n "$GRSEC" ] || fail "downloading grsecurity page"
-        PATCH=$(echo "$GRSEC" | grep -o 'grsecurity-[.0-9]*-[.0-9]*-[0-9]*\.patch' | sort -ru | head -n 1)
-        [ -n "$PATCH" ] || fail "parse patch file from grsec page"
-        KVER=$(echo "$PATCH" | sed 's/^grsecurity-[0-9.]\+-\([0-9.]\+\)-[0-9]\+\.patch/\1/')
-        [ -n "$KVER" ] || fail "could not parse kernel version on grsec site"
+#        GRSEC=$(curl -s https://grsecurity.net/test.php)
+#        [ -n "$GRSEC" ] || fail "downloading grsecurity page"
+#        PATCH=$(echo "$GRSEC" | grep -o 'grsecurity-[.0-9]*-[.0-9]*-[0-9]*\.patch' | sort -ru | head -n 1)
+        PATCH=$(wget -q https://grsecurity.net/download.php -O - | grep -Eio href.*test\/.+patch | cut -d'"' -f2 | cut -d'/' -f2)
+        [ -n "$PATCH" ] || fail "Could not gather patch file info from grsec page"
+        KVER=$(echo "$PATCH" | cut -d"-" -f3)
+        [ -n "$KVER" ] || fail "Could not parse kernel version from grsec site"
 
         # Majour, medium, minor releases
         MA=`echo $KVER | awk -F \. {'print $1'}` # y.x.x
@@ -68,7 +69,11 @@ getkernsource() {
                 KERNTAR="linux-libre-$MA.$ME.$MI-gnu.tar"
         fi
         # kernel.org src
-        KERNORGURL="https://www.kernel.org/pub/linux/kernel/v$MA.x/"
+        if [[ $MA -eq 3 && $ME -ne 0 ]]; then
+                KERNORGURL="https://www.kernel.org/pub/linux/kernel/v$MA.x/"
+        else
+                KERNORGURL="https://www.kernel.org/pub/linux/kernel/v$MA.$ME/"
+        fi
         if [ "$KERNTYPE" = "linus" ]; then
                 KERNURL="$KERNORGURL"
                 KERNTAR="linux-$KVER.tar"
@@ -145,7 +150,7 @@ if [[ "$KERNTYPE" != "linus" && "$KERNTYPE" != "libre" ]]; then
 fi
 
 # Are these packages installed?
-PACKAGENEEDS="build-essential make fakeroot pgpgpg wget git ncurses-dev curl wget xz-utils grub-legacy"
+PACKAGENEEDS="build-essential make fakeroot pgpgpg wget git libncurses5-dev curl wget xz-utils grub-legacy"
 for thepackage in $PACKAGENEEDS
 do
         dpkg-query -s $thepackage &> /dev/null || needthese="$needthese $thepackage"
