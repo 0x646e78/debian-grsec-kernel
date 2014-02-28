@@ -33,9 +33,6 @@ fail() {
 checkgrsec() {
         # Parse the grsecurity website for testing version number of grsec and kernel it's for
         echo -e "\n [*] Checking what kernel latest Grsec patch uses";
-#        GRSEC=$(curl -s https://grsecurity.net/test.php)
-#        [ -n "$GRSEC" ] || fail "downloading grsecurity page"
-#        PATCH=$(echo "$GRSEC" | grep -o 'grsecurity-[.0-9]*-[.0-9]*-[0-9]*\.patch' | sort -ru | head -n 1)
         PATCH=$(wget -q https://grsecurity.net/download.php -O - | grep -Eio href.*test\/.+patch \
           | cut -d'"' -f2 | cut -d'/' -f2)
         [ -n "$PATCH" ] || fail "Could not gather patch file info from grsec page"
