@@ -48,8 +48,3 @@ Tested on non-production servers and desktops from debian 6-7.5, stable and test
 Credit
 ---------
 This script was initially based on https://github.com/StalkR/misc/blob/master/kernel/get-and-build.sh and radically altered by redrs at https://github.com/redrs/debian-grsec-kernel
-
-Credit
--------
-This script was initially based on https://github.com/StalkR/misc/blob/master/kernel/kernel-builder.sh
-
