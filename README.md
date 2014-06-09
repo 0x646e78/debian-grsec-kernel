@@ -31,7 +31,7 @@ To compile with last found build config use
 ```
 
 Grsec notes
-==============
+-----------
 I found that PAX was killing update-grub programs, which are run on after a kernel install by /etc/kernel/postinst.d/zz-update-grub and on removing a kernel by /etc/kernel/postrm.d/zz-update-grub
 
 To stop this use the paxctl command to disable protections on /usr/sbin/grub-probe and /usr/bin/grub-script-check
@@ -39,15 +39,17 @@ To stop this use the paxctl command to disable protections on /usr/sbin/grub-pro
 Backup the binaries first before converting them. (paxctl -cC /bin/program) 
 
 Stability
-==============
+---------
 
 Tested on non-production servers and desktops from debian 6-7.5, stable and testing, with kernels:
  - 3.8.5
  - 3.13.5
 
-
 Credit
-==============
+---------
 This script was initially based on https://github.com/StalkR/misc/blob/master/kernel/get-and-build.sh and radically altered by redrs at https://github.com/redrs/debian-grsec-kernel
 
+Credit
+-------
+This script was initially based on https://github.com/StalkR/misc/blob/master/kernel/kernel-builder.sh
 
