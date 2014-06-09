@@ -19,7 +19,7 @@ This script will:
  
 Place this script where you want to build/store the kernels, eg: copy the script to /home/theuser/sources/kernels/ and run it from there.
 
-To compile with last found build config use: ./get-and-build.sh buildlastconfig
+To compile with last found build config use: ./kernel-builder.sh buildlastconfig
 
 Grsec notes
 ==============
@@ -35,6 +35,6 @@ I routinely build the latest Kernel on my [non-production] server without any is
 
 Credit
 ==============
-This script was initially based on https://github.com/StalkR/misc/blob/master/kernel/get-and-build.sh
+This script was initially based on https://github.com/StalkR/misc/blob/master/kernel/kernel-builder.sh
 
 Not too much or the original code remains now, my customizations have more than doubled the size of the script... .
