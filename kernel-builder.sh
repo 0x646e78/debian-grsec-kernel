@@ -2,25 +2,25 @@
 #
 # Automatic Grsecurity patched kernel compile script for Debian.
 #
-# Place this script where you want to build/store the kernels,
-# eg: copy script to /home/user/source/kernels/ and run it there.
+# Link to this script from where you want to build/store the kernels, eg:
+#   ln -sf <path_to_repo>/kernel-builder.sh ~/src/kernel/
 
 # What Kernel source are we using?
-# "libre" = Use Libre-Linux from FSFLA  (free as in beer)
-# "linus" = Use Kernel.org release      (free as in speech)
+# "libre" = Use Libre-Linux from FSFLA  (free as in freedom)
+# "linus" = Use Kernel.org release
 KERNTYPE="linus"
 
 # check for and download upates
 RUNUPDATES="n"
-# OR run with ./get-and-build.sh update
+# OR run with ./kernel-builder.sh update
 
 # copy over the .config from the most recent build.
 LASTCONFIG="n"
-# OR run with ./get-and-build.sh lastconfig
+# OR run with ./kernel-builder.sh lastconfig
 
 # just build most recent kernel we have, don't check/download updates
 BUILD="n"
-# OR ./get-and-build.sh build
+# OR ./kernel-builder.sh build
 
 #########################################################################
 ## functions:
