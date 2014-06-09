@@ -22,6 +22,8 @@ LASTCONFIG="n"
 BUILD="n"
 # OR ./kernel-builder.sh build
 
+KEYSERVER="keyserver.ubuntu.com"
+
 #########################################################################
 ## functions:
 
@@ -170,7 +172,7 @@ fi
 if [ "$KERNTYPE" = "linus" ]; then
   if [ `gpg --list-keys 6092693E | wc -l` -eq 0 ]; then
   echo "[*] don't have kernel gpg keys";
-  gpg --recv-keys 6092693E &> /dev/null || fail "could not get kernel pgp key"
+  gpg --keyserver $KEYSERVER --recv-keys 6092693E &> /dev/null || fail "could not get kernel pgp key"
   GPGKERN=`gpg --fingerprint 6092693E | grep fingerprint | tr -d ' ' | sed 's/Keyfingerprint\=//g'`
   if [ "$GPGKERN" != "647F28654894E3BD457199BE38DBBDC86092693E" ]; then
     fail "Kernel pgp key has wrong fingerprint!"
@@ -182,7 +184,7 @@ fi
 if [ "$KERNTYPE" = "libre" ]; then
   if [ `gpg --list-keys 7E7D47A7 | wc -l` -eq 0  ]; then
   echo "[*] don't have libre-linux gpg keys";
-  gpg --recv-keys 7E7D47A7 &> /dev/null || fail "could not get linux-libre pgp key"
+  gpg --keyserver $KEYSERVER --recv-keys 7E7D47A7 &> /dev/null || fail "could not get linux-libre pgp key"
   GPGKERN=`gpg --fingerprint 7E7D47A7 | grep fingerprint | tr -d ' ' | sed 's/Keyfingerprint\=//g'`
   if [ "$GPGKERN" != "474402C8C582DAFBE389C427BCB7CF877E7D47A7" ]; then
     fail "Linux-libre pgp key has wrong fingerprint!"
@@ -193,8 +195,9 @@ fi
 # for grsec:
 if [ `gpg --list-keys 4245D46A | wc -l` -eq 0 ]; then
   echo "[*] don't have grsec pgp key";
-  curl -# -O https://grsecurity.net/spender-gpg-key.asc
-  gpg --import spender-gpg-key.asc &> /dev/null || fail "importing spenders pgp key"
+#  curl -# -O https://grsecurity.net/spender-gpg-key.asc
+  gpg --keyserver $KEYSERVER --recv-keys 4245D46A &> /dev/null || fail "could not get grsecurity pgp key"
+#  gpg --import spender-gpg-key.asc &> /dev/null || fail "importing spenders pgp key"
   GPGSPEND=`gpg --fingerprint 4245D46A | grep fingerprint | tr -d ' ' | sed 's/Keyfingerprint\=//g'`
   if [ "$GPGSPEND" != "9F74393D7E7FFF3C6500E7789879B6494245D46A" ]; then
     fail "Spenders gpg key has wrong fingerprint!"
