@@ -29,7 +29,7 @@ To compile with last found build config use
 
 Grsec notes
 -----------
- t has been found that PAX was killing update-grub programs, which are run after a kernel 
+It has been found that PAX was killing update-grub programs, which are run after a kernel 
 install by /etc/kernel/postinst.d/zz-update-grub and on removing a kernel by 
 /etc/kernel/postrm.d/zz-update-grub
 
@@ -40,7 +40,10 @@ Backup the binaries first before converting them. (paxctl -cC /bin/program)
 
 Credit
 ---------
-This script was initially based on [get-and-build.sh by StalkR](https://github.com/StalkR/misc/blob/master/kernel/get-and-build.sh) and radically altered by [redrs](https://github.com/redrs/debian-grsec-kernel)
+This script was initially based on [get-and-build.sh by StalkR](https://github.com/StalkR/misc/blob/master/kernel/get-and-build.sh)
+
+It was radically altered by [redrs](https://github.com/redrs/debian-grsec-kernel)
+
 [auraltension](https://github.com/auraltension/debian-grsec-kernel) then picked up the project,
-and as pull requests upstream have not been responded to, nor has teh code been touched in
+and as pull requests upstream have not been responded to, nor has the code been touched in
 over a year, I woudl consider this repo to be the up-to-date project.
