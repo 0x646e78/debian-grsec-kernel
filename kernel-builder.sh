@@ -5,23 +5,6 @@
 # Link to this script from where you want to build/store the kernels, eg:
 #   ln -sf <path_to_repo>/kernel-builder.sh ~/src/kernel/
 
-# What Kernel source are we using?
-# "libre" = Use Libre-Linux from FSFLA  (free as in freedom)
-# "linus" = Use Kernel.org release
-KERNTYPE="linus"
-
-# check for and download upates
-RUNUPDATES="n"
-# OR run with ./kernel-builder.sh update
-
-# copy over the .config from the most recent build.
-LASTCONFIG="n"
-# OR run with ./kernel-builder.sh lastconfig
-
-# just build most recent kernel we have, don't check/download updates
-BUILD="n"
-# OR ./kernel-builder.sh build
-
 KEYSERVER="keyserver.ubuntu.com"
 
 #########################################################################
@@ -32,7 +15,7 @@ fail() {
   exit 1
 }
 
-checkgrsec() {
+find_grsec() {
   # Parse the grsecurity website for testing version number of grsec and kernel it's for
   echo -e "\n [*] Checking what kernel latest Grsec patch uses";
   PATCH=$(wget -q https://grsecurity.net/download.php -O - | grep -Eio href.*test\/.+patch \
@@ -114,25 +97,32 @@ uncompress() {
 
 compilekern() {
   echo -e "\n [*] Starting Kernel build"
+  # Check for a config file
   if [ ! -f "$KVER/$KERNTYPE/linux-$KVER/.config"  ]; then
     fail "can not compile, missing .config"
   fi
+  # Check that grsec patch has been applied
   if [ ! -d "$KVER/$KERNTYPE/linux-$KVER/grsecurity" ]; then
     fail "kernel source has not been patched with grsec"
   fi
+
   cd $KVER/$KERNTYPE/linux-$KVER/
   echo | make oldconfig || fail "make oldconfig"
+
   startbuild_time=`date +%s`
   make -j3 bzImage || fail "make bzimage"
   make deb-pkg || fail "compiling with 'make deb-pg' failed"
   endbuild_time=`date +%s`
+
   echo -e " \n [*] build time: `expr $endbuild_time - $startbuild_time` seconds. \n"
   timebuilt=`date "+%H_%M_%d-%m-%y"`
+
   cd ../../
   mkdir build_$KERNTYPE_$timebuilt -v
   cp $KERNTYPE/linux-$KVER/.config build_$KERNTYPE_$timebuilt/build.config -v
   mv $KERNTYPE/*.deb build_$KERNTYPE_$timebuilt/ -v
   cd $CWD1
+
   echo -e "\n [*] Kernel compiled.";
 }
 
@@ -141,13 +131,74 @@ compilekern() {
 
 # environment
 CWD1=`pwd`
+
+# Check for bash
 [ -z "$BASH_VERSION" ] && fail "Need bash"
+
+# Fail if run as root
 [ "$(id -u)" = "0" ] && fail "Don't roll as root"
+
+# Fail if not debian
 [ ! -f  "/etc/debian_version" ] && fail "This script is currently just for Debian based systems"
 
-if [[ "$KERNTYPE" != "linus" && "$KERNTYPE" != "libre" ]]; then
-  fail "wrong kernel type selected, KERNTYPE must be: linus OR libre"
-fi
+usage() {
+  printf """
+options:
+ -k <linus|libre>  (Kernel) type
+                   "libre" = Use Libre-Linux from FSFLA
+                   "linus" = Use kernel.org release
+ -c <config file>  Kernel (config file) !not prsesently working!
+ -r                Use current (running) kernels config !not presently working!
+ -p                Use the (previous) config file built
+ -u                (Update) to the latest kernel and grsec patch
+ -b                (Build) the latest kernel we have
+ """
+}
+
+
+while getopts ":k:c:rpub" opt; do
+  case $opt in
+    k)
+      if [ "$OPTARG" != "linus" ] && [ "$OPTARG" != "libre" ]; then
+        echo "Incorrect kernel type specified"
+        usage
+        exit 1
+      fi
+      echo "$OPTARG Kernel selected."
+      KERNTYPE=$OPTARG
+      ;;
+    c)
+      echo "config was triggered, Parameter: $OPTARG" >&2
+      ;;
+    r)
+      echo "running was triggered." >&2
+      ;;
+    p)
+      echo "Using previous config."
+      LASTCONFIG="y"
+      ;;
+    u)
+      echo "Latest Kernel and grsec patch will be downloaded"
+      RUNUPDATES="y"
+      ;;
+    b)
+      BUILD="y"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      usage
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+# Exit if no options are given
+[ $# -eq 0 ] && usage && exit 1
 
 # Are these packages installed?
 PACKAGENEEDS="build-essential make fakeroot pgpgpg wget git libncurses5-dev curl wget xz-utils grub-legacy"
@@ -180,6 +231,7 @@ if [ "$KERNTYPE" = "linus" ]; then
   echo "[*] Got Greg Kroah-Hartman's pgp key (Linux kernel stable release signing key)";
   fi
 fi
+
 # for linux-libre kernel:
 if [ "$KERNTYPE" = "libre" ]; then
   if [ `gpg --list-keys 7E7D47A7 | wc -l` -eq 0  ]; then
@@ -192,6 +244,7 @@ if [ "$KERNTYPE" = "libre" ]; then
   echo "[*] Got Linux-libre pgp key";
   fi
 fi
+
 # for grsec:
 if [ `gpg --list-keys 4245D46A | wc -l` -eq 0 ]; then
   echo "[*] don't have grsec pgp key";
@@ -209,8 +262,8 @@ fi
 ## actions:
 
 # check for and get updates?
-if [[ "$1" = "update" || "$2" = "update" || "$3" = "update" || "$RUNUPDATES" = [y-Y]  ]]; then
-  checkgrsec
+if [[ "$RUNUPDATES" = "y" ]]; then
+  find_grsec
   if [ ! -d "$KVER" ]; then
     mkdir $KVER
   fi
@@ -248,15 +301,19 @@ else
 fi
 
 # copy over old config?
-if [[ "$1" = "lastconfig" || "$2" = "lastconfig" || "$3" = "lastconfig" || "$LASTCONFIG" = [y-Y]  ]]; then
+if [[ "$LASTCONFIG" = "y" ]]; then
   # find most recent build config
-  LASTBUILDCONF=`find -type f -name build.config -exec ls {} -t \; | tail -n1`
+  LASTBUILDCONF=$(find -type f -name build.config -exec ls {} -t \; | tail -n1)
+  if [ -z $LASTBUILDCONFIG ]; then
+    echo "No previous config found"
+    exit 1
+  fi
   echo -e "\n [*] Using config from most recent build"
   cp $LASTBUILDCONF $KVER/$KERNTYPE/linux-$KVER/.config -v
 fi
 
 #compile kernel?
-if [[ "$1" = "build" || "$2" = "build" || "$3" = "build" || "$BUILD" = [y-Y]  ]]; then
+if [[ "$BUILD" = "y" ]]; then
   compilekern
 fi
 
