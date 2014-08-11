@@ -46,4 +46,4 @@ It was radically altered by [redrs](https://github.com/redrs/debian-grsec-kernel
 
 [auraltension](https://github.com/auraltension/debian-grsec-kernel) then picked up the project,
 and as pull requests upstream have not been responded to, nor has the code been touched in
-over a year, I woudl consider this repo to be the up-to-date project.
+over a year, I consider this repo to be the up-to-date project.
