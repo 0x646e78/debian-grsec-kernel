@@ -23,9 +23,9 @@ Link to this script from where you want to build/store the kernels, eg:
 
     ln -sf <path_to_repo>/kernel-builder.sh ~/src/kernel/
 
-To compile with last found build config use 
+For usage information run with no options, such as:
 
-    ./kernel-builder.sh buildlastconfig
+    ./kernel-builder.sh
 
 Grsec notes
 -----------
