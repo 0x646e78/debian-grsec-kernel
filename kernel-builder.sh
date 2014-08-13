@@ -15,6 +15,7 @@ fail() {
   exit 1
 }
 
+
 find_grsec() {
   # Parse the grsecurity website for testing version number of grsec and kernel it's for
   echo -e "\n [*] Checking what kernel latest Grsec patch uses";
@@ -107,11 +108,11 @@ compilekern() {
   fi
 
   cd $KVER/$KERNTYPE/linux-$KVER/
-  echo | make oldconfig || fail "make oldconfig"
+  sudo make oldconfig || fail "make oldconfig"
 
   startbuild_time=`date +%s`
-  make -j3 bzImage || fail "make bzimage"
-  make deb-pkg || fail "compiling with 'make deb-pg' failed"
+  sudo make -j3 bzImage || fail "make bzimage"
+  sudo make deb-pkg || fail "compiling with 'make deb-pg' failed"
   endbuild_time=`date +%s`
 
   echo -e " \n [*] build time: `expr $endbuild_time - $startbuild_time` seconds. \n"
@@ -127,11 +128,11 @@ compilekern() {
 }
 
 #########################################################################
-## checks:
 
 # environment
 CWD1=`pwd`
 
+## Checks
 # Check for bash
 [ -z "$BASH_VERSION" ] && fail "Need bash"
 
@@ -141,6 +142,7 @@ CWD1=`pwd`
 # Fail if not debian
 [ ! -f  "/etc/debian_version" ] && fail "This script is currently just for Debian based systems"
 
+# Get input
 usage() {
   printf """
 options:
@@ -154,7 +156,6 @@ options:
  -b                (Build) the latest kernel we have
  """
 }
-
 
 while getopts ":k:c:rpub" opt; do
   case $opt in
@@ -201,7 +202,9 @@ done
 [ $# -eq 0 ] && usage && exit 1
 
 # Are these packages installed?
-PACKAGENEEDS="build-essential make fakeroot pgpgpg wget git libncurses5-dev curl wget xz-utils grub-legacy"
+GCC_VERSION=$(ls -al /usr/bin/gcc | cut -d">" -f2 | cut -d"-" -f2)
+GCC_PLUGIN_DEV="gcc-"$GCC_VERSION"-plugin-dev"
+PACKAGENEEDS="build-essential make fakeroot pgpgpg wget git libncurses5-dev curl wget xz-utils grub-legacy "$GCC_PLUGIN_DEV
 
 for thepackage in $PACKAGENEEDS
 do
@@ -303,8 +306,8 @@ fi
 # copy over old config?
 if [[ "$LASTCONFIG" = "y" ]]; then
   # find most recent build config
-  LASTBUILDCONF=$(find -type f -name build.config -exec ls {} -t \; | tail -n1)
-  if [ -z $LASTBUILDCONFIG ]; then
+  LASTBUILDCONF=$(find -type f -name build.config -exec ls {} -t \; 2>/dev/null| grep build_ | tail -n1)
+  if [ -z $LASTBUILDCONF ]; then
     echo "No previous config found"
     exit 1
   fi
