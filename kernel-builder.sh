@@ -15,6 +15,48 @@ fail() {
   exit 1
 }
 
+get_sigs() {
+  ## Do we have the pgp keys we need to use to check signed files? If not try to download them
+  # for kernel.org kernel:
+  if [ "$KERNTYPE" = "linus" ]; then
+    if [ `gpg --list-keys 6092693E | wc -l` -eq 0 ]; then
+    echo "[*] don't have kernel gpg keys";
+    gpg --keyserver $KEYSERVER --recv-keys 6092693E &> /dev/null || fail "could not get kernel pgp key"
+    GPGKERN=`gpg --fingerprint 6092693E | grep fingerprint | tr -d ' ' | sed 's/Keyfingerprint\=//g'`
+    if [ "$GPGKERN" != "647F28654894E3BD457199BE38DBBDC86092693E" ]; then
+      fail "Kernel pgp key has wrong fingerprint!"
+    fi
+    echo "[*] Got Greg Kroah-Hartman's pgp key (Linux kernel stable release signing key)";
+    fi
+  fi
+  
+  # for linux-libre kernel:
+  if [ "$KERNTYPE" = "libre" ]; then
+    if [ `gpg --list-keys 7E7D47A7 | wc -l` -eq 0  ]; then
+    echo "[*] don't have libre-linux gpg keys";
+    gpg --keyserver $KEYSERVER --recv-keys 7E7D47A7 &> /dev/null || fail "could not get linux-libre pgp key"
+    GPGKERN=`gpg --fingerprint 7E7D47A7 | grep fingerprint | tr -d ' ' | sed 's/Keyfingerprint\=//g'`
+    if [ "$GPGKERN" != "474402C8C582DAFBE389C427BCB7CF877E7D47A7" ]; then
+      fail "Linux-libre pgp key has wrong fingerprint!"
+    fi
+    echo "[*] Got Linux-libre pgp key";
+    fi
+  fi
+  
+  # for grsec:
+  if [ `gpg --list-keys 4245D46A | wc -l` -eq 0 ]; then
+    echo "[*] don't have grsec pgp key";
+  #  curl -# -O https://grsecurity.net/spender-gpg-key.asc
+    gpg --keyserver $KEYSERVER --recv-keys 4245D46A &> /dev/null || fail "could not get grsecurity pgp key"
+  #  gpg --import spender-gpg-key.asc &> /dev/null || fail "importing spenders pgp key"
+    GPGSPEND=`gpg --fingerprint 4245D46A | grep fingerprint | tr -d ' ' | sed 's/Keyfingerprint\=//g'`
+    if [ "$GPGSPEND" != "9F74393D7E7FFF3C6500E7789879B6494245D46A" ]; then
+      fail "Spenders gpg key has wrong fingerprint!"
+    fi
+    echo "[*] Got Bradley Spengler's pgp key";
+  fi
+}
+
 
 find_grsec() {
   # Parse the grsecurity website for testing version number of grsec and kernel it's for
@@ -116,12 +158,12 @@ compilekern() {
   endbuild_time=`date +%s`
 
   echo -e " \n [*] build time: `expr $endbuild_time - $startbuild_time` seconds. \n"
-  timebuilt=`date "+%H_%M_%d-%m-%y"`
+  timebuilt=$(date "+%Y%m%d-%H:%M")
 
   cd ../../
-  mkdir build_$KERNTYPE_$timebuilt -v
-  cp $KERNTYPE/linux-$KVER/.config build_$KERNTYPE_$timebuilt/build.config -v
-  mv $KERNTYPE/*.deb build_$KERNTYPE_$timebuilt/ -v
+  mkdir build_"$KERNTYPE"_"$timebuilt" -v
+  cp $KERNTYPE/linux-$KVER/.config build_"$KERNTYPE"_"$timebuilt"/build.config -v
+  mv $KERNTYPE/*.deb build_"$KERNTYPE"_"$timebuilt"/ -v
   cd $CWD1
 
   echo -e "\n [*] Kernel compiled.";
@@ -149,8 +191,9 @@ options:
  -k <linus|libre>  (Kernel) type
                    "libre" = Use Libre-Linux from FSFLA
                    "linus" = Use kernel.org release
- -c <config file>  Kernel (config file) !not prsesently working!
- -r                Use current (running) kernels config !not presently working!
+ -c <config file>  Kernel (config file) !not prsesently implemented!
+ -r                Use current (running) kernels config !not presently implemented!
+ -m                Run the interactive (menuconfig) !not presently implemented!
  -p                Use the (previous) config file built
  -u                (Update) to the latest kernel and grsec patch
  -b                (Build) the latest kernel we have
@@ -173,6 +216,9 @@ while getopts ":k:c:rpub" opt; do
       ;;
     r)
       echo "running was triggered." >&2
+      ;;
+    m)
+      echo "menu was triggered." >&2
       ;;
     p)
       echo "Using previous config."
@@ -221,51 +267,13 @@ if [ `echo ${needthese} | wc -w` -gt 0 ]; then
   fi
 fi
 
-## Do we have the pgp keys we need to use to check signed files? If not try to download them
-# for kernel.org kernel:
-if [ "$KERNTYPE" = "linus" ]; then
-  if [ `gpg --list-keys 6092693E | wc -l` -eq 0 ]; then
-  echo "[*] don't have kernel gpg keys";
-  gpg --keyserver $KEYSERVER --recv-keys 6092693E &> /dev/null || fail "could not get kernel pgp key"
-  GPGKERN=`gpg --fingerprint 6092693E | grep fingerprint | tr -d ' ' | sed 's/Keyfingerprint\=//g'`
-  if [ "$GPGKERN" != "647F28654894E3BD457199BE38DBBDC86092693E" ]; then
-    fail "Kernel pgp key has wrong fingerprint!"
-  fi
-  echo "[*] Got Greg Kroah-Hartman's pgp key (Linux kernel stable release signing key)";
-  fi
-fi
-
-# for linux-libre kernel:
-if [ "$KERNTYPE" = "libre" ]; then
-  if [ `gpg --list-keys 7E7D47A7 | wc -l` -eq 0  ]; then
-  echo "[*] don't have libre-linux gpg keys";
-  gpg --keyserver $KEYSERVER --recv-keys 7E7D47A7 &> /dev/null || fail "could not get linux-libre pgp key"
-  GPGKERN=`gpg --fingerprint 7E7D47A7 | grep fingerprint | tr -d ' ' | sed 's/Keyfingerprint\=//g'`
-  if [ "$GPGKERN" != "474402C8C582DAFBE389C427BCB7CF877E7D47A7" ]; then
-    fail "Linux-libre pgp key has wrong fingerprint!"
-  fi
-  echo "[*] Got Linux-libre pgp key";
-  fi
-fi
-
-# for grsec:
-if [ `gpg --list-keys 4245D46A | wc -l` -eq 0 ]; then
-  echo "[*] don't have grsec pgp key";
-#  curl -# -O https://grsecurity.net/spender-gpg-key.asc
-  gpg --keyserver $KEYSERVER --recv-keys 4245D46A &> /dev/null || fail "could not get grsecurity pgp key"
-#  gpg --import spender-gpg-key.asc &> /dev/null || fail "importing spenders pgp key"
-  GPGSPEND=`gpg --fingerprint 4245D46A | grep fingerprint | tr -d ' ' | sed 's/Keyfingerprint\=//g'`
-  if [ "$GPGSPEND" != "9F74393D7E7FFF3C6500E7789879B6494245D46A" ]; then
-    fail "Spenders gpg key has wrong fingerprint!"
-  fi
-  echo "[*] Got Bradley Spengler's pgp key";
-fi
 
 #########################################################################
 ## actions:
 
 # check for and get updates?
 if [[ "$RUNUPDATES" = "y" ]]; then
+  get_sigs
   find_grsec
   if [ ! -d "$KVER" ]; then
     mkdir $KVER
@@ -299,8 +307,9 @@ if [[ "$RUNUPDATES" = "y" ]]; then
     echo -e "\n [*] Applied patch to kernel source."
   fi
 else
-  # set kver if not from checking updates
-  KVER=`ls | grep -o "[0-9]*.[0-9]*.[0-9]" | sort -k2 -t. -n | tail -n1`
+  # set kver  nd kerntype if not from checking updates
+  KVER=$(ls -t | grep -e '[2-9].*' | head -n1)
+  KERNTYPE=$(ls -t $KVER | grep ^l | head -n1)
 fi
 
 # copy over old config?
@@ -311,8 +320,8 @@ if [[ "$LASTCONFIG" = "y" ]]; then
     echo "No previous config found"
     exit 1
   fi
-  echo -e "\n [*] Using config from most recent build"
-  cp $LASTBUILDCONF $KVER/$KERNTYPE/linux-$KVER/.config -v
+  echo -e "\n [*] Using config from most recent build, at $LASTBUILDCONF"
+  sudo cp $LASTBUILDCONF $KVER/$KERNTYPE/linux-$KVER/.config -v
 fi
 
 #compile kernel?
