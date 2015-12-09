@@ -315,7 +315,7 @@ fi
 # copy over old config?
 if [[ "$LASTCONFIG" = "y" ]]; then
   # find most recent build config
-  LASTBUILDCONF=$(find -type f -name build.config -exec ls {} -t \; 2>/dev/null| grep build_ | tail -n1)
+  LASTBUILDCONF=$(find . -type f -name build.config -exec ls {} -t \; 2>/dev/null| grep build_ | tail -n1)
   if [ -z $LASTBUILDCONF ]; then
     echo "No previous config found"
     exit 1
